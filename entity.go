@@ -1,6 +1,6 @@
 package tickspot
 
-type tickEntry struct {
+type TickEntry struct {
 	Date   string  `json:"date"`
 	Hours  float64 `json:"hours"`
 	Notes  string  `json:"notes"`
