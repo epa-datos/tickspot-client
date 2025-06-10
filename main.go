@@ -64,7 +64,7 @@ func (T *TickClient) sendRequest(method, url string, body []byte) (*http.Respons
 	return res, nil
 }
 
-func (T *TickClient) GetTasks(userID int, startDate, endDate string) ([]tickEntry, error) {
+func (T *TickClient) GetTasks(userID int, startDate, endDate string) ([]TickEntry, error) {
 	getURL := fmt.Sprintf("%s/users/%d/entries?start_date=%s&end_date=%s", T.tickToken, userID, startDate, endDate)
 
 	res, err := T.sendRequest("GET", getURL, nil)
@@ -79,7 +79,7 @@ func (T *TickClient) GetTasks(userID int, startDate, endDate string) ([]tickEntr
 	if res.StatusCode >= 300 {
 		return nil, errors.New(string(bodyContent))
 	}
-	tasks := []tickEntry{}
+	tasks := []TickEntry{}
 	errUnmarshal := json.Unmarshal(bodyContent, &tasks)
 	if errUnmarshal != nil {
 		return nil, errUnmarshal
@@ -101,7 +101,7 @@ func (T *TickClient) DeleteTask(taskID int) error {
 	return nil
 }
 
-func (T *TickClient) UploadTask(tickEntry tickEntry) error {
+func (T *TickClient) UploadTask(tickEntry TickEntry) error {
 	postURL := fmt.Sprintf("%s/entries.json", T.tickURL)
 	body, err := json.Marshal(tickEntry)
 	if err != nil {
