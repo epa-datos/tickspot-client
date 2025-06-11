@@ -123,6 +123,7 @@ func (T *TickClient) GetUsers() ([]UsersTick, error) {
 	}
 	return usersTick, nil
 }
+
 func (T *TickClient) GetUserByEmail(email string) (*UsersTick, error) {
 	getURL := fmt.Sprintf("%s/users.json?email=%s", T.tickURL, email)
 	bodyContent, err := T.sendRequest("GET", getURL, nil)

@@ -1,6 +1,7 @@
 package tickspot
 
 type TickEntry struct {
+	ID     int     `json:"id,omitempty"`
 	Date   string  `json:"date"`
 	Hours  float64 `json:"hours"`
 	Notes  string  `json:"notes"`
