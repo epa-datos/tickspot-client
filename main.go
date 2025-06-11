@@ -48,33 +48,30 @@ func (T *TickClient) sendRequest(method, url string, body []byte) ([]byte, error
 	r.Header.Add("Authorization", headerToken)
 	r.Header.Add("User-Agent", T.userAgent)
 	r.Header.Add("Content-Type", "application/json")
+	r.Header.Add("Accept", "*/*")
+
 	client := &http.Client{}
 	res, err := client.Do(r)
 	if err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
-	if res.StatusCode >= 300 {
-		bodyContent, err := io.ReadAll(res.Body)
-		if err != nil {
-			return nil, err
-		}
-		return nil, errors.New(string(bodyContent))
-	}
-
 	bodyContent, err := io.ReadAll(res.Body)
-	defer res.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 	if res.StatusCode >= 300 {
-		return nil, errors.New(string(bodyContent))
+		if err != nil {
+			return nil, err
+		}
+		return nil, errors.New(res.Status)
 	}
+
 	return bodyContent, nil
 }
 
 func (T *TickClient) GetTasks(userID int, startDate, endDate string) ([]TickEntry, error) {
-	getURL := fmt.Sprintf("%s/users/%d/entries?start_date=%s&end_date=%s", T.tickToken, userID, startDate, endDate)
+	getURL := fmt.Sprintf("%s/users/%d/entries?start_date=%s&end_date=%s", T.tickURL, userID, startDate, endDate)
 
 	bodyContent, err := T.sendRequest("GET", getURL, nil)
 	if err != nil {
@@ -86,6 +83,7 @@ func (T *TickClient) GetTasks(userID int, startDate, endDate string) ([]TickEntr
 	if errUnmarshal != nil {
 		return nil, errUnmarshal
 	}
+
 	return tasks, nil
 }
 
