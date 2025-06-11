@@ -39,7 +39,7 @@ func NewTickspotClient(tickProject, tickToken, userAgent string) (*TickClient, e
 	}, nil
 }
 
-func (T *TickClient) sendRequest(method, url string, body []byte) (*http.Response, error) {
+func (T *TickClient) sendRequest(method, url string, body []byte) ([]byte, error) {
 	headerToken := fmt.Sprintf(`Token token=%s`, T.tickToken)
 	r, err := http.NewRequest(method, url, bytes.NewBuffer(body))
 	if err != nil {
@@ -61,16 +61,7 @@ func (T *TickClient) sendRequest(method, url string, body []byte) (*http.Respons
 		}
 		return nil, errors.New(string(bodyContent))
 	}
-	return res, nil
-}
 
-func (T *TickClient) GetTasks(userID int, startDate, endDate string) ([]TickEntry, error) {
-	getURL := fmt.Sprintf("%s/users/%d/entries?start_date=%s&end_date=%s", T.tickToken, userID, startDate, endDate)
-
-	res, err := T.sendRequest("GET", getURL, nil)
-	if err != nil {
-		return nil, err
-	}
 	bodyContent, err := io.ReadAll(res.Body)
 	defer res.Body.Close()
 	if err != nil {
@@ -79,6 +70,17 @@ func (T *TickClient) GetTasks(userID int, startDate, endDate string) ([]TickEntr
 	if res.StatusCode >= 300 {
 		return nil, errors.New(string(bodyContent))
 	}
+	return bodyContent, nil
+}
+
+func (T *TickClient) GetTasks(userID int, startDate, endDate string) ([]TickEntry, error) {
+	getURL := fmt.Sprintf("%s/users/%d/entries?start_date=%s&end_date=%s", T.tickToken, userID, startDate, endDate)
+
+	bodyContent, err := T.sendRequest("GET", getURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
 	tasks := []TickEntry{}
 	errUnmarshal := json.Unmarshal(bodyContent, &tasks)
 	if errUnmarshal != nil {
@@ -89,14 +91,9 @@ func (T *TickClient) GetTasks(userID int, startDate, endDate string) ([]TickEntr
 
 func (T *TickClient) DeleteTask(taskID int) error {
 	deleteURL := fmt.Sprintf("%s/entries/%d.json", T.tickURL, taskID)
-	res, err := T.sendRequest("DELETE", deleteURL, nil)
+	_, err := T.sendRequest("DELETE", deleteURL, nil)
 	if err != nil {
 		return err
-	}
-	defer res.Body.Close()
-	if res.StatusCode >= 300 {
-		bodyContent, _ := io.ReadAll(res.Body)
-		return errors.New(string(bodyContent))
 	}
 	return nil
 }
@@ -107,31 +104,19 @@ func (T *TickClient) UploadTask(tickEntry TickEntry) error {
 	if err != nil {
 		return err
 	}
-	res, err := T.sendRequest("POST", postURL, body)
+	_, err = T.sendRequest("POST", postURL, body)
 	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
-	if res.StatusCode >= 300 {
-		bodyContent, _ := io.ReadAll(res.Body)
-		return errors.New(string(bodyContent))
-	}
+
 	return nil
 }
 
 func (T *TickClient) GetUsers() ([]UsersTick, error) {
 	getURL := fmt.Sprintf("%s/users.json", T.tickURL)
-	res, err := T.sendRequest("GET", getURL, nil)
+	bodyContent, err := T.sendRequest("GET", getURL, nil)
 	if err != nil {
 		return nil, err
-	}
-	defer res.Body.Close()
-	bodyContent, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	if res.StatusCode >= 300 {
-		return nil, errors.New(string(bodyContent))
 	}
 	usersTick := []UsersTick{}
 	errUnmarshal := json.Unmarshal(bodyContent, &usersTick)
@@ -142,18 +127,11 @@ func (T *TickClient) GetUsers() ([]UsersTick, error) {
 }
 func (T *TickClient) GetUserByEmail(email string) (*UsersTick, error) {
 	getURL := fmt.Sprintf("%s/users.json?email=%s", T.tickURL, email)
-	res, err := T.sendRequest("GET", getURL, nil)
+	bodyContent, err := T.sendRequest("GET", getURL, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
-	bodyContent, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	if res.StatusCode >= 300 {
-		return nil, errors.New(string(bodyContent))
-	}
+
 	usersTick := []UsersTick{}
 	errUnmarshal := json.Unmarshal(bodyContent, &usersTick)
 	if errUnmarshal != nil {
