@@ -55,23 +55,20 @@ func (T *TickClient) sendRequest(method, url string, body []byte) ([]byte, error
 	if err != nil {
 		return nil, err
 	}
+	if res.StatusCode >= 300 {
+		return nil, errors.New(res.Status)
+	}
 	defer res.Body.Close()
 	bodyContent, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
-	if res.StatusCode >= 300 {
-		if err != nil {
-			return nil, err
-		}
-		return nil, errors.New(res.Status)
-	}
 
 	return bodyContent, nil
 }
 
-func (T *TickClient) GetTasks(userID int, startDate, endDate string) ([]TickEntry, error) {
-	getURL := fmt.Sprintf("%s/users/%d/entries?start_date=%s&end_date=%s", T.tickURL, userID, startDate, endDate)
+func (T *TickClient) GetTasks(userID, page int, startDate, endDate string) ([]TickEntry, error) {
+	getURL := fmt.Sprintf("%s/users/%d/entries?start_date=%s&end_date=%s&page=%d", T.tickURL, userID, startDate, endDate, page)
 
 	bodyContent, err := T.sendRequest("GET", getURL, nil)
 	if err != nil {
